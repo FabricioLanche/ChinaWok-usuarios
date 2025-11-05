@@ -19,6 +19,7 @@ crud-usuarios/
 ```
 
 Para desplegar el proyecto con Serverless:
+```
 1️⃣ Instala dependencias:
 npm install -g serverless
 pip install -r requirements.txt
@@ -26,7 +27,7 @@ pip install -r requirements.txt
 aws configure
 3️⃣ Despliega:
 serverless deploy
-
+```
 Esto creará automáticamente los endpoints en API Gateway.
 
 Los endpoints principales son:
