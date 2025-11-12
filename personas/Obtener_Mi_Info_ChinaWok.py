@@ -17,40 +17,17 @@ def lambda_handler(event, context):
         "role": authorizer.get("role")
     }
     
-    # Obtener correo del query parameter o body
+    # Obtener correo del query parameter
     correo_solicitado = None
     
-    # Intentar desde queryStringParameters (GET)
     if event.get("queryStringParameters"):
         correo_solicitado = event["queryStringParameters"].get("correo")
-    
-    # Si no, intentar desde body (POST)
-    if not correo_solicitado:
-        body = {}
-        if isinstance(event, dict) and "body" in event:
-            raw_body = event.get("body")
-            if isinstance(raw_body, str) and raw_body:
-                body = json.loads(raw_body)
-            elif isinstance(raw_body, dict):
-                body = raw_body
-        correo_solicitado = body.get("correo")
     
     # Si no se proporciona correo, retornar info del usuario autenticado
     if not correo_solicitado:
         correo_solicitado = usuario_autenticado["correo"]
     
-    # 🔒 Verificar permisos
-    es_admin = verificar_rol(usuario_autenticado, ["Admin"])
-    es_gerente = verificar_rol(usuario_autenticado, ["Gerente"])
-    es_mismo_usuario = usuario_autenticado["correo"] == correo_solicitado
-    
-    # Admin ve todo, Gerente ve todos los usuarios, Cliente solo ve su info
-    if not (es_admin or es_gerente or es_mismo_usuario):
-        return {
-            "statusCode": 403,
-            "body": json.dumps({"message": "No tienes permiso para ver esta información"})
-        }
-
+    # Obtener información del usuario solicitado
     try:
         resp = usuarios_table.get_item(Key={"correo": correo_solicitado})
         
@@ -60,17 +37,40 @@ def lambda_handler(event, context):
                 "body": json.dumps({"message": "Usuario no encontrado"})
             }
         
-        usuario = resp["Item"]
+        usuario_solicitado = resp["Item"]
+        role_solicitado = usuario_solicitado.get("role", "Cliente")
+        
+        # 🔒 Verificar permisos
+        es_admin = verificar_rol(usuario_autenticado, ["Admin"])
+        es_gerente = verificar_rol(usuario_autenticado, ["Gerente"])
+        es_mismo_usuario = usuario_autenticado["correo"] == correo_solicitado
+        
+        # Admin ve a todos
+        if es_admin:
+            pass
+        # Gerente solo ve a Clientes (y a sí mismo)
+        elif es_gerente:
+            if not (role_solicitado == "Cliente" or es_mismo_usuario):
+                return {
+                    "statusCode": 403,
+                    "body": json.dumps({"message": "Gerente solo puede ver información de Clientes"})
+                }
+        # Cliente solo ve su propia información
+        elif not es_mismo_usuario:
+            return {
+                "statusCode": 403,
+                "body": json.dumps({"message": "Solo puedes ver tu propia información"})
+            }
         
         # Remover contraseña de la respuesta
-        if "contrasena" in usuario:
-            del usuario["contrasena"]
+        if "contrasena" in usuario_solicitado:
+            del usuario_solicitado["contrasena"]
         
         return {
             "statusCode": 200,
             "body": json.dumps({
                 "message": "Usuario encontrado",
-                "usuario": usuario
+                "usuario": usuario_solicitado
             }, default=str)
         }
     except Exception as e:
