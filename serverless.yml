@@ -3,11 +3,10 @@ service: chinawok-usuarios
 
 custom:
   pythonRequirements:
-    dockerizePip: non-linux
-    zip: true
     slim: true
     strip: false
-    layer: false
+    usePipenv: false
+    usePoetry: false
 
 provider:
   name: aws
