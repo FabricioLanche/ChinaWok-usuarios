@@ -82,6 +82,19 @@ functions:
             identitySource: method.request.header.Authorization
             type: token
 
+  obtenerMiInfo:
+    handler: personas/Obtener_Mi_Info_ChinaWok.lambda_handler
+    events:
+      - http:
+          path: usuario/mi-info
+          method: get
+          cors: true
+          authorizer:
+            name: authorizer
+            resultTtlInSeconds: 0
+            identitySource: method.request.header.Authorization
+            type: token
+
   modificar:
     handler: personas/Modificar_Usuario_ChinaWok.lambda_handler
     events:
