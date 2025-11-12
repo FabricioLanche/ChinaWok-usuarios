@@ -1,20 +1,24 @@
-service: api-usuarios-chinawok
-frameworkVersion: '3'
+org: flanche
+service: chinawok-usuarios
 
 provider:
   name: aws
   runtime: python3.12
+  memorySize: 512
+  timeout: 300
   region: us-east-1
-  stage: prod
+  
   environment:
     AWS_REGION: us-east-1
-    TABLE_USUARIOS: ChinaWok-Usuarios
-    TABLE_TOKENS: ChinaWok-Tokens
-    TOKEN_FUNCTION_NAME: Validar_Token_Acceso_ChinaWok
+    TABLE_USUARIOS: ${env:TABLE_USUARIOS, 'ChinaWok-Usuarios'}
+    TABLE_TOKENS: ${env:TABLE_TOKENS, 'ChinaWok-Tokens'}
+
+  iam:
+    role: arn:aws:iam::${env:AWS_ACCOUNT_ID}:role/LabRole
 
 functions:
   crear:
-    handler: crear_usuario.lambda_handler
+    handler: personas/Crear_usuario_ChinaWok.lambda_handler
     events:
       - http:
           path: usuario/crear
@@ -22,7 +26,7 @@ functions:
           cors: true
 
   login:
-    handler: login.lambda_handler
+    handler: personas/Login_usuario_ChinaWok.lambda_handler
     events:
       - http:
           path: usuario/login
@@ -30,7 +34,7 @@ functions:
           cors: true
 
   listar:
-    handler: listar_usuarios.lambda_handler
+    handler: personas/Listar_usuario_ChinaWok.lambda_handler
     events:
       - http:
           path: usuario/listar
@@ -38,7 +42,7 @@ functions:
           cors: true
 
   buscar:
-    handler: buscar_usuario.lambda_handler
+    handler: personas/Buscar_usuario_correo_ChinaWok.lambda_handler
     events:
       - http:
           path: usuario/buscar
@@ -46,7 +50,7 @@ functions:
           cors: true
 
   modificar:
-    handler: modificar_usuario.lambda_handler
+    handler: personas/Modificar_Usuario_ChinaWok.lambda_handler
     events:
       - http:
           path: usuario/modificar
@@ -54,7 +58,7 @@ functions:
           cors: true
 
   eliminar:
-    handler: eliminar_usuario.lambda_handler
+    handler: personas/Eliminar_usuario_ChinaWok.lambda_handler
     events:
       - http:
           path: usuario/eliminar
@@ -62,7 +66,7 @@ functions:
           cors: true
 
   validarToken:
-    handler: validar_token.lambda_handler
+    handler: personas/Validar_Token_Acceso_ChinaWok.lambda_handler
     events:
       - http:
           path: usuario/validartoken

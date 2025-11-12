@@ -3,7 +3,6 @@
 # Archivos y carpetas de entorno
 .env
 *.env
-.env.*
 *.pyc
 __pycache__/
 *.pyo

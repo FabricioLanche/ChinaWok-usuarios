@@ -1,7 +1,12 @@
 import boto3
 import hashlib
 import uuid
+import os
 from datetime import datetime, timedelta
+
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+TABLE_USUARIOS = os.getenv("TABLE_USUARIOS", "ChinaWok-Usuarios")
+TABLE_TOKENS = os.getenv("TABLE_TOKENS", "ChinaWok-Tokens")
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -19,8 +24,8 @@ def lambda_handler(event, context):
 
     hashed_password = hash_password(contrasena)
 
-    dynamodb = boto3.resource('dynamodb')
-    tabla_usuarios = dynamodb.Table('ChinaWok-Usuarios')
+    dynamodb = boto3.resource('dynamodb', region_name=AWS_REGION)
+    tabla_usuarios = dynamodb.Table(TABLE_USUARIOS)
 
     response = tabla_usuarios.get_item(Key={'correo': correo})
     if 'Item' not in response:
@@ -41,7 +46,7 @@ def lambda_handler(event, context):
     token = str(uuid.uuid4())
     fecha_exp = datetime.now() + timedelta(minutes=60)
 
-    tabla_tokens = dynamodb.Table('ChinaWok-Tokens')
+    tabla_tokens = dynamodb.Table(TABLE_TOKENS)
     tabla_tokens.put_item(
         Item={
             'token': token,

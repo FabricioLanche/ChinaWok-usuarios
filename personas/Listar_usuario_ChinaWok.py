@@ -1,14 +1,13 @@
 import boto3
 import os
 import json
+from utils.utils import validar_token
 
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 TABLE_USUARIOS = os.getenv("TABLE_USUARIOS", "ChinaWok-Usuarios")
-TOKEN_FUNCTION_NAME = "Validar_Token_Acceso_ChinaWok"
 
 dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
 usuarios_table = dynamodb.Table(TABLE_USUARIOS)
-lambda_client = boto3.client("lambda", region_name=AWS_REGION)
 
 def _get_token(event):
     headers = event.get("headers", {}) or {}
@@ -19,21 +18,12 @@ def _get_token(event):
         return auth.split(" ", 1)[1]
     return auth
 
-def _validar_token(token):
-    payload = {"token": token}
-    invoke_response = lambda_client.invoke(
-        FunctionName=TOKEN_FUNCTION_NAME,
-        InvocationType="RequestResponse",
-        Payload=json.dumps(payload).encode("utf-8")
-    )
-    return json.loads(invoke_response["Payload"].read())
-
 def lambda_handler(event, context):
     token = _get_token(event)
     if not token:
         return {"statusCode": 401, "body": {"message": "Falta token"}}
 
-    resp_val = _validar_token(token)
+    resp_val = validar_token(token)
     if resp_val.get("statusCode") != 200:
         return {"statusCode": 403, "body": {"message": "Acceso no autorizado"}}
 
