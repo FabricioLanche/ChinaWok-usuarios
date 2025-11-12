@@ -9,7 +9,6 @@ provider:
   region: us-east-1
   
   environment:
-    AWS_REGION: us-east-1
     TABLE_USUARIOS: ${env:TABLE_USUARIOS, 'ChinaWok-Usuarios'}
     TABLE_TOKENS: ${env:TABLE_TOKENS, 'ChinaWok-Tokens'}
 

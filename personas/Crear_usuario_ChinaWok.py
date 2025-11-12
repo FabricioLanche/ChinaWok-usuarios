@@ -3,10 +3,9 @@ import boto3
 import os
 from datetime import datetime, timezone
 
-AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 TABLE_USUARIOS_NAME = os.getenv("TABLE_USUARIOS", "ChinaWok-Usuarios")
 
-dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
+dynamodb = boto3.resource("dynamodb")
 usuarios_table = dynamodb.Table(TABLE_USUARIOS_NAME)
 
 def lambda_handler(event, context):

@@ -2,11 +2,11 @@ import boto3
 import os
 from datetime import datetime
 
-AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+# AWS_REGION está configurado automáticamente por Lambda
 TABLE_TOKENS = os.getenv("TABLE_TOKENS", "ChinaWok-Tokens")
 TABLE_USUARIOS = os.getenv("TABLE_USUARIOS", "ChinaWok-Usuarios")
 
-dynamodb = boto3.resource('dynamodb', region_name=AWS_REGION)
+dynamodb = boto3.resource('dynamodb')
 tabla_tokens = dynamodb.Table(TABLE_TOKENS)
 tabla_usuarios = dynamodb.Table(TABLE_USUARIOS)
 
