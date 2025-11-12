@@ -29,13 +29,18 @@ def lambda_handler(event, context):
     nombre = body.get("nombre")
     correo = body.get("correo")
     contrasena = body.get("contrasena")
-    role = body.get("role", "Cliente")
-    informacion_bancaria = body.get("informacion_bancaria")
 
     if not nombre or not correo or not contrasena:
         return {
             "statusCode": 400,
             "body": {"message": "nombre, correo y contrasena son obligatorios"}
+        }
+
+    # Validar longitud mínima de contraseña
+    if len(contrasena) < 6:
+        return {
+            "statusCode": 400,
+            "body": {"message": "contrasena debe tener al menos 6 caracteres"}
         }
 
     resp = usuarios_table.get_item(Key={"correo": correo})
@@ -45,24 +50,15 @@ def lambda_handler(event, context):
             "body": {"message": "Usuario ya existe"}
         }
 
-    # 🚨 Verificar si ya existe un admin en la tabla
-    scan = usuarios_table.scan()
-    hay_admin = any(u.get("role") == "Admin" for u in scan.get("Items", []))
-
-    # Si ya hay admin, forzar a Cliente
-    if hay_admin and role == "Admin":
-        role = "Cliente"
-
+    # El rol siempre se inicializa como "Cliente"
     item = {
         "nombre": nombre,
         "correo": correo,
         "contrasena": contrasena,
-        "role": role,
+        "role": "Cliente",
+        "historial_pedidos": [],
         "created_at": datetime.now(timezone.utc).isoformat()
     }
-
-    if informacion_bancaria:
-        item["informacion_bancaria"] = informacion_bancaria
 
     usuarios_table.put_item(Item=item)
 
@@ -70,6 +66,6 @@ def lambda_handler(event, context):
         "statusCode": 201,
         "body": {
             "message": "Usuario creado correctamente",
-            "role_asignado": role
+            "role_asignado": "Cliente"
         }
     }

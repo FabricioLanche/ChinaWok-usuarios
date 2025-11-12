@@ -11,11 +11,17 @@ provider:
   environment:
     TABLE_USUARIOS: ${env:TABLE_USUARIOS, 'ChinaWok-Usuarios'}
     TABLE_TOKENS: ${env:TABLE_TOKENS, 'ChinaWok-Tokens'}
+    JWT_SECRET: ${env:JWT_SECRET, 'tu-clave-secreta-super-segura-cambiar-en-produccion'}
+    JWT_EXPIRATION_HOURS: ${env:JWT_EXPIRATION_HOURS, '24'}
 
   iam:
     role: arn:aws:iam::${env:AWS_ACCOUNT_ID}:role/LabRole
 
 functions:
+  # 🔐 Authorizer centralizado
+  authorizer:
+    handler: personas/Authorizer.lambda_handler
+
   crear:
     handler: personas/Crear_usuario_ChinaWok.lambda_handler
     events:
@@ -23,6 +29,7 @@ functions:
           path: usuario/crear
           method: post
           cors: true
+          # Sin authorizer - endpoint público
 
   login:
     handler: personas/Login_usuario_ChinaWok.lambda_handler
@@ -31,6 +38,7 @@ functions:
           path: usuario/login
           method: post
           cors: true
+          # Sin authorizer - endpoint público
 
   listar:
     handler: personas/Listar_usuario_ChinaWok.lambda_handler
@@ -39,6 +47,11 @@ functions:
           path: usuario/listar
           method: get
           cors: true
+          authorizer:
+            name: authorizer
+            resultTtlInSeconds: 0
+            identitySource: method.request.header.Authorization
+            type: token
 
   buscar:
     handler: personas/Buscar_usuario_correo_ChinaWok.lambda_handler
@@ -47,6 +60,11 @@ functions:
           path: usuario/buscar
           method: post
           cors: true
+          authorizer:
+            name: authorizer
+            resultTtlInSeconds: 0
+            identitySource: method.request.header.Authorization
+            type: token
 
   modificar:
     handler: personas/Modificar_Usuario_ChinaWok.lambda_handler
@@ -55,6 +73,11 @@ functions:
           path: usuario/modificar
           method: put
           cors: true
+          authorizer:
+            name: authorizer
+            resultTtlInSeconds: 0
+            identitySource: method.request.header.Authorization
+            type: token
 
   eliminar:
     handler: personas/Eliminar_usuario_ChinaWok.lambda_handler
@@ -63,11 +86,8 @@ functions:
           path: usuario/eliminar
           method: delete
           cors: true
-
-  validarToken:
-    handler: personas/Validar_Token_Acceso_ChinaWok.lambda_handler
-    events:
-      - http:
-          path: usuario/validartoken
-          method: post
-          cors: true
+          authorizer:
+            name: authorizer
+            resultTtlInSeconds: 0
+            identitySource: method.request.header.Authorization
+            type: token

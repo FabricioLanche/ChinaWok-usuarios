@@ -1,51 +1,45 @@
 import json
 import boto3
 import os
-from utils.utils import validar_token
+from utils.utils import verificar_rol
 
 TABLE_USUARIOS_NAME = os.getenv("TABLE_USUARIOS", "ChinaWok-Usuarios")
 
 dynamodb = boto3.resource("dynamodb")
 usuarios_table = dynamodb.Table(TABLE_USUARIOS_NAME)
 
-def _parse_body(event):
-    body = event.get("body", {})
-    if isinstance(body, str):
-        body = json.loads(body) if body.strip() else {}
-    elif not isinstance(body, dict):
-        body = {}
-    return body
-
-def _get_token(event, body):
-    headers = event.get("headers", {}) or {}
-    token = headers.get("Authorization") or headers.get("authorization") or body.get("token")
-    if not token:
-        return None
-    if isinstance(token, str) and token.lower().startswith("bearer "):
-        token = token.split(" ", 1)[1].strip()
-    return token
 
 def lambda_handler(event, context):
-    body = _parse_body(event)
-    token = _get_token(event, body)
-
-    if not token:
-        return {
-            "statusCode": 401,
-            "body": {"message": "Falta token"}
-        }
-
-    resp_val = validar_token(token)
-
-    if resp_val.get("statusCode") == 403:
+    # Obtener usuario autenticado
+    authorizer = event.get("requestContext", {}).get("authorizer", {})
+    usuario_autenticado = {
+        "correo": authorizer.get("correo"),
+        "role": authorizer.get("role")
+    }
+    
+    # 🔒 Solo Admin puede eliminar usuarios
+    if not verificar_rol(usuario_autenticado, ["Admin"]):
         return {
             "statusCode": 403,
-            "body": {"message": "Forbidden - Acceso No Autorizado"}
+            "body": {"message": "Acceso denegado. Solo Admin puede eliminar usuarios."}
         }
 
-    path_params = event.get("pathParameters") or {}
-    correo = path_params.get("correo") or body.get("correo") or event.get("correo")
+    body = {}
+    if isinstance(event, dict) and "body" in event:
+        raw_body = event.get("body")
+        if isinstance(raw_body, str):
+            if raw_body:
+                body = json.loads(raw_body)
+            else:
+                body = {}
+        elif isinstance(raw_body, dict):
+            body = raw_body
+    elif isinstance(event, dict):
+        body = event
+    elif isinstance(event, str):
+        body = json.loads(event)
 
+    correo = body.get("correo")
     if not correo:
         return {
             "statusCode": 400,
@@ -63,5 +57,5 @@ def lambda_handler(event, context):
 
     return {
         "statusCode": 200,
-        "body": {"message": f"Usuario '{correo}' eliminado correctamente"}
+        "body": {"message": "Usuario eliminado correctamente"}
     }
