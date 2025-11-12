@@ -1,6 +1,17 @@
 org: flanche
 service: chinawok-usuarios
 
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: non-linux
+    zip: true
+    slim: true
+    strip: false
+    layer: false
+
 provider:
   name: aws
   runtime: python3.12
