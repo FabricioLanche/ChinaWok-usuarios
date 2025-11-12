@@ -69,19 +69,6 @@ functions:
             identitySource: method.request.header.Authorization
             type: token
 
-  buscar:
-    handler: personas/Buscar_usuario_correo_ChinaWok.lambda_handler
-    events:
-      - http:
-          path: usuario/buscar
-          method: post
-          cors: true
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 0
-            identitySource: method.request.header.Authorization
-            type: token
-
   obtenerMiInfo:
     handler: personas/Obtener_Mi_Info_ChinaWok.lambda_handler
     events:
