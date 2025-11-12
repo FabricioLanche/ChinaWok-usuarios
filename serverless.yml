@@ -10,7 +10,6 @@ provider:
   
   environment:
     TABLE_USUARIOS: ${env:TABLE_USUARIOS, 'ChinaWok-Usuarios'}
-    TABLE_TOKENS: ${env:TABLE_TOKENS, 'ChinaWok-Tokens'}
     JWT_SECRET: ${env:JWT_SECRET, 'tu-clave-secreta-super-segura-cambiar-en-produccion'}
     JWT_EXPIRATION_HOURS: ${env:JWT_EXPIRATION_HOURS, '24'}
 

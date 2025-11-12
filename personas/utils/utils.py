@@ -1,16 +1,8 @@
 import jwt
-import boto3
 import os
 from datetime import datetime, timedelta
 
-TABLE_TOKENS = os.getenv("TABLE_TOKENS", "ChinaWok-Tokens")
-TABLE_USUARIOS = os.getenv("TABLE_USUARIOS", "ChinaWok-Usuarios")
-
-dynamodb = boto3.resource('dynamodb')
-tabla_tokens = dynamodb.Table(TABLE_TOKENS)
-tabla_usuarios = dynamodb.Table(TABLE_USUARIOS)
-
-# Clave secreta (en producción usar AWS Secrets Manager)
+# Solo necesitamos JWT_SECRET, no tablas de DynamoDB
 JWT_SECRET = os.getenv("JWT_SECRET", "tu-clave-secreta-super-segura-cambiar-en-produccion")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = int(os.getenv("JWT_EXPIRATION_HOURS", "24"))

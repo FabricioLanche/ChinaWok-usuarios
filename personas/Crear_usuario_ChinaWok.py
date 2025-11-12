@@ -2,6 +2,7 @@ import json
 import boto3
 import os
 from datetime import datetime, timezone
+from utils.utils import generar_token
 
 TABLE_USUARIOS_NAME = os.getenv("TABLE_USUARIOS", "ChinaWok-Usuarios")
 
@@ -62,10 +63,22 @@ def lambda_handler(event, context):
 
     usuarios_table.put_item(Item=item)
 
+    # Generar token automáticamente al crear usuario
+    token = generar_token(
+        correo=correo,
+        role="Cliente",
+        nombre=nombre
+    )
+
     return {
         "statusCode": 201,
         "body": json.dumps({
             "message": "Usuario creado correctamente",
-            "role_asignado": "Cliente"
+            "token": token,
+            "usuario": {
+                "correo": correo,
+                "nombre": nombre,
+                "role": "Cliente"
+            }
         })
     }
