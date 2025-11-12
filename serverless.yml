@@ -16,6 +16,15 @@ provider:
   iam:
     role: arn:aws:iam::${env:AWS_ACCOUNT_ID}:role/LabRole
 
+package:
+  patterns:
+    - '!.git/**'
+    - '!.vscode/**'
+    - '!node_modules/**'
+    - '!__pycache__/**'
+    - '!*.pyc'
+    - 'personas/**'
+
 functions:
   # 🔐 Authorizer centralizado
   authorizer:

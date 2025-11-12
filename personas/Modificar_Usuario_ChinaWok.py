@@ -2,7 +2,7 @@ import boto3
 import os
 import json
 import re
-from utils.utils import verificar_rol
+from personas.utils.utils import verificar_rol
 
 TABLE_USUARIOS_NAME = os.getenv("TABLE_USUARIOS", "ChinaWok-Usuarios")
 

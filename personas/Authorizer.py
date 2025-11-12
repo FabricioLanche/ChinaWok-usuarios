@@ -1,5 +1,5 @@
 import json
-from utils.utils import validar_token
+from personas.utils.utils import validar_token
 
 def lambda_handler(event, context):
     """

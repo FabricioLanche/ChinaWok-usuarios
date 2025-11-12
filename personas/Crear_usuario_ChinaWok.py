@@ -2,7 +2,7 @@ import json
 import boto3
 import os
 from datetime import datetime, timezone
-from utils.utils import generar_token
+from personas.utils.utils import generar_token
 
 TABLE_USUARIOS_NAME = os.getenv("TABLE_USUARIOS", "ChinaWok-Usuarios")
 
