@@ -3,6 +3,7 @@ service: chinawok-usuarios
 
 custom:
   pythonRequirements:
+    dockerizePip: true
     slim: true
     strip: false
     usePipenv: false
