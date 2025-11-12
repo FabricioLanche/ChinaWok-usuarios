@@ -33,27 +33,24 @@ def lambda_handler(event, context):
     if not correo or not contrasena:
         return {
             "statusCode": 400,
-            "body": {"message": "correo y contrasena son obligatorios"}
+            "body": json.dumps({"message": "correo y contrasena son obligatorios"})
         }
 
-    # Buscar usuario
     resp = usuarios_table.get_item(Key={"correo": correo})
     if "Item" not in resp:
         return {
             "statusCode": 401,
-            "body": {"message": "Credenciales inválidas"}
+            "body": json.dumps({"message": "Credenciales inválidas"})
         }
 
     usuario = resp["Item"]
 
-    # Verificar contraseña (en producción usar bcrypt)
     if usuario.get("contrasena") != contrasena:
         return {
             "statusCode": 401,
-            "body": {"message": "Credenciales inválidas"}
+            "body": json.dumps({"message": "Credenciales inválidas"})
         }
 
-    # Generar JWT
     token = generar_token(
         correo=usuario["correo"],
         role=usuario.get("role", "Cliente"),
@@ -62,7 +59,7 @@ def lambda_handler(event, context):
 
     return {
         "statusCode": 200,
-        "body": {
+        "body": json.dumps({
             "message": "Login exitoso",
             "token": token,
             "usuario": {
@@ -70,5 +67,5 @@ def lambda_handler(event, context):
                 "nombre": usuario["nombre"],
                 "role": usuario.get("role", "Cliente")
             }
-        }
+        })
     }

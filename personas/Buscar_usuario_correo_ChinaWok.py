@@ -1,73 +1,60 @@
 import json
 import boto3
 import os
-from utils.utils import validar_token
 
 TABLE_USUARIOS_NAME = os.getenv("TABLE_USUARIOS", "ChinaWok-Usuarios")
 
 dynamodb = boto3.resource("dynamodb")
 usuarios_table = dynamodb.Table(TABLE_USUARIOS_NAME)
 
-def _parse_body(event):
-    body = event.get("body", {})
-    if isinstance(body, str):
-        body = json.loads(body) if body.strip() else {}
-    elif not isinstance(body, dict):
-        body = {}
-    return body
-
-def _get_token(event, body):
-    headers = event.get("headers", {}) or {}
-    token = headers.get("Authorization") or headers.get("authorization") or body.get("token")
-    if not token:
-        return None
-    if isinstance(token, str) and token.lower().startswith("bearer "):
-        token = token.split(" ", 1)[1].strip()
-    return token
 
 def lambda_handler(event, context):
-    body = _parse_body(event)
-    token = _get_token(event, body)
-    if not token:
-        return {"statusCode": 401, "body": {"message": "Falta token"}}
+    body = {}
+    if isinstance(event, dict) and "body" in event:
+        raw_body = event.get("body")
+        if isinstance(raw_body, str):
+            if raw_body:
+                body = json.loads(raw_body)
+            else:
+                body = {}
+        elif isinstance(raw_body, dict):
+            body = raw_body
+    elif isinstance(event, dict):
+        body = event
+    elif isinstance(event, str):
+        body = json.loads(event)
 
-    resp_val = validar_token(token)
-    if resp_val.get("statusCode") != 200:
-        return {"statusCode": 403, "body": {"message": "Acceso no autorizado"}}
-
-    role = resp_val.get("body", {}).get("role", "Cliente")
-    if role.lower() != "admin":
-        return {"statusCode": 403, "body": {"message": "Solo los administradores pueden buscar usuarios"}}
-
-    path_params = event.get("pathParameters") or {}
-    correo = path_params.get("correo") or body.get("correo") or event.get("correo")
+    correo = body.get("correo")
     if not correo:
-        return {"statusCode": 400, "body": {"message": "correo es obligatorio"}}
-
-    resp = usuarios_table.get_item(Key={"correo": correo})
-    if "Item" not in resp:
-        return {"statusCode": 404, "body": {"message": "Usuario no encontrado"}}
-
-    user = resp["Item"]
-    user.pop("contrasena", None)
-
-    full_user = {
-        "nombre": user.get("nombre"),
-        "correo": user.get("correo"),
-        "role": user.get("role"),
-        "informacion_bancaria": {
-            "numero_tarjeta": None,
-            "cvv": None,
-            "fecha_vencimiento": None,
-            "direccion_facturacion": None
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"message": "correo es obligatorio"})
         }
-    }
 
-    if "informacion_bancaria" in user:
-        info = user["informacion_bancaria"]
-        full_user["informacion_bancaria"]["numero_tarjeta"] = info.get("numero_tarjeta")
-        full_user["informacion_bancaria"]["cvv"] = info.get("cvv")
-        full_user["informacion_bancaria"]["fecha_vencimiento"] = info.get("fecha_vencimiento")
-        full_user["informacion_bancaria"]["direccion_facturacion"] = info.get("direccion_facturacion")
-
-    return {"statusCode": 200, "body": full_user}
+    try:
+        resp = usuarios_table.get_item(Key={"correo": correo})
+        
+        if "Item" not in resp:
+            return {
+                "statusCode": 404,
+                "body": json.dumps({"message": "Usuario no encontrado"})
+            }
+        
+        usuario = resp["Item"]
+        
+        # Remover contraseña de la respuesta
+        if "contrasena" in usuario:
+            del usuario["contrasena"]
+        
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "message": "Usuario encontrado",
+                "usuario": usuario
+            }, default=str)
+        }
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"message": f"Error al buscar usuario: {str(e)}"})
+        }

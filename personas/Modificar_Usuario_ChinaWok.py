@@ -19,16 +19,6 @@ def _parse_body(event):
     return body
 
 
-def _get_token(event, body):
-    headers = event.get("headers", {}) or {}
-    token = headers.get("Authorization") or headers.get("authorization") or body.get("token")
-    if not token:
-        return None
-    if isinstance(token, str) and token.lower().startswith("bearer "):
-        token = token.split(" ", 1)[1].strip()
-    return token
-
-
 def validar_informacion_bancaria(info_bancaria):
     """Valida el esquema de informacion_bancaria"""
     if not isinstance(info_bancaria, dict):
@@ -83,7 +73,7 @@ def lambda_handler(event, context):
     if not correo:
         return {
             "statusCode": 400,
-            "body": {"message": "correo es obligatorio"}
+            "body": json.dumps({"message": "correo es obligatorio"})
         }
 
     # 🔒 Verificar permisos: Admin puede modificar a cualquiera, otros solo a sí mismos
@@ -93,14 +83,14 @@ def lambda_handler(event, context):
     if not (es_admin or es_mismo_usuario):
         return {
             "statusCode": 403,
-            "body": {"message": "Solo puedes modificar tu propio perfil"}
+            "body": json.dumps({"message": "Solo puedes modificar tu propio perfil"})
         }
 
     resp = usuarios_table.get_item(Key={"correo": correo})
     if "Item" not in resp:
         return {
             "statusCode": 404,
-            "body": {"message": "Usuario no encontrado"}
+            "body": json.dumps({"message": "Usuario no encontrado"})
         }
 
     update_expr = "SET "
@@ -118,7 +108,7 @@ def lambda_handler(event, context):
         if len(body["contrasena"]) < 6:
             return {
                 "statusCode": 400,
-                "body": {"message": "contrasena debe tener al menos 6 caracteres"}
+                "body": json.dumps({"message": "contrasena debe tener al menos 6 caracteres"})
             }
         updates.append("contrasena = :contrasena")
         expr_attr_values[":contrasena"] = body["contrasena"]
@@ -129,13 +119,13 @@ def lambda_handler(event, context):
         if not es_admin:
             return {
                 "statusCode": 403,
-                "body": {"message": "Solo Admin puede cambiar roles"}
+                "body": json.dumps({"message": "Solo Admin puede cambiar roles"})
             }
         
         if body["role"] not in ["Cliente", "Gerente", "Admin"]:
             return {
                 "statusCode": 400,
-                "body": {"message": "role debe ser Cliente, Gerente o Admin"}
+                "body": json.dumps({"message": "role debe ser Cliente, Gerente o Admin"})
             }
         updates.append("#role = :role")
         expr_attr_names["#role"] = "role"
@@ -147,7 +137,7 @@ def lambda_handler(event, context):
         if not es_valido:
             return {
                 "statusCode": 400,
-                "body": {"message": f"informacion_bancaria inválida: {error}"}
+                "body": json.dumps({"message": f"informacion_bancaria inválida: {error}"})
             }
         updates.append("informacion_bancaria = :informacion_bancaria")
         expr_attr_values[":informacion_bancaria"] = body["informacion_bancaria"]
@@ -155,7 +145,7 @@ def lambda_handler(event, context):
     if not updates:
         return {
             "statusCode": 400,
-            "body": {"message": "No hay campos para actualizar"}
+            "body": json.dumps({"message": "No hay campos para actualizar"})
         }
 
     update_expr += ", ".join(updates)
@@ -166,7 +156,7 @@ def lambda_handler(event, context):
         "ExpressionAttributeValues": expr_attr_values,
         "ReturnValues": "ALL_NEW"
     }
-
+    
     if expr_attr_names:
         kwargs["ExpressionAttributeNames"] = expr_attr_names
 
@@ -174,8 +164,8 @@ def lambda_handler(event, context):
 
     return {
         "statusCode": 200,
-        "body": {
+        "body": json.dumps({
             "message": "Usuario actualizado correctamente",
             "usuario": updated_item["Attributes"]
-        }
+        }, default=str)
     }

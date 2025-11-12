@@ -33,21 +33,21 @@ def lambda_handler(event, context):
     if not nombre or not correo or not contrasena:
         return {
             "statusCode": 400,
-            "body": {"message": "nombre, correo y contrasena son obligatorios"}
+            "body": json.dumps({"message": "nombre, correo y contrasena son obligatorios"})
         }
 
     # Validar longitud mínima de contraseña
     if len(contrasena) < 6:
         return {
             "statusCode": 400,
-            "body": {"message": "contrasena debe tener al menos 6 caracteres"}
+            "body": json.dumps({"message": "contrasena debe tener al menos 6 caracteres"})
         }
 
     resp = usuarios_table.get_item(Key={"correo": correo})
     if "Item" in resp:
         return {
             "statusCode": 409,
-            "body": {"message": "Usuario ya existe"}
+            "body": json.dumps({"message": "Usuario ya existe"})
         }
 
     # El rol siempre se inicializa como "Cliente"
@@ -64,8 +64,8 @@ def lambda_handler(event, context):
 
     return {
         "statusCode": 201,
-        "body": {
+        "body": json.dumps({
             "message": "Usuario creado correctamente",
             "role_asignado": "Cliente"
-        }
+        })
     }

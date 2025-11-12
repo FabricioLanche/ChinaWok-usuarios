@@ -21,7 +21,7 @@ def lambda_handler(event, context):
     if not verificar_rol(usuario_autenticado, ["Admin"]):
         return {
             "statusCode": 403,
-            "body": {"message": "Acceso denegado. Solo Admin puede eliminar usuarios."}
+            "body": json.dumps({"message": "Acceso denegado. Solo Admin puede eliminar usuarios."})
         }
 
     body = {}
@@ -43,19 +43,19 @@ def lambda_handler(event, context):
     if not correo:
         return {
             "statusCode": 400,
-            "body": {"message": "correo es obligatorio"}
+            "body": json.dumps({"message": "correo es obligatorio"})
         }
 
     resp = usuarios_table.get_item(Key={"correo": correo})
     if "Item" not in resp:
         return {
             "statusCode": 404,
-            "body": {"message": "Usuario no encontrado"}
+            "body": json.dumps({"message": "Usuario no encontrado"})
         }
 
     usuarios_table.delete_item(Key={"correo": correo})
 
     return {
         "statusCode": 200,
-        "body": {"message": "Usuario eliminado correctamente"}
+        "body": json.dumps({"message": "Usuario eliminado correctamente"})
     }
