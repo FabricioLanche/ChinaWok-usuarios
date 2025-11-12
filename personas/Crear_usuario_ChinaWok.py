@@ -58,7 +58,7 @@ def lambda_handler(event, context):
         "contrasena": contrasena,
         "role": "Cliente",
         "historial_pedidos": [],
-        "created_at": datetime.now(timezone.utc).isoformat()
+        "informacion_bancaria": None
     }
 
     usuarios_table.put_item(Item=item)
